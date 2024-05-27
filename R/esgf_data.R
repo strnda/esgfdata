@@ -136,7 +136,7 @@ while (!any(chck) | aux > download_tries) {
 
 
 #########################
-fls <- list.files(path = paste0(pth, "/wget/")
+fls <- list.files(path = paste0(pth, "/wget/"),
                   full.names = TRUE)
 
 nfo <- as.data.table(x = file.info(fls))
