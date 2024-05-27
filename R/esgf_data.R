@@ -64,10 +64,6 @@ meta
 
 wget_url <- "https://esgf-node.llnl.gov/esg-search/wget?"
 
-dir.create(path = "./data/dl",
-           recursive = TRUE,
-           showWarnings = FALSE)
-
 to_get_wget <- list()
 
 for (var in variable) {
@@ -120,7 +116,7 @@ dir.create(path = paste0(pth, "/wget/"),
            showWarnings = FALSE)
 
 md_wget <- multi_download(urls = unlist(x = wget_all),
-                          destfiles = paste0("./data/dl/wget/",
+                          destfiles = paste0(pth, "/wget/",
                                              wget_nms,
                                              ".sh"))
 
@@ -131,7 +127,7 @@ while (!any(chck) | aux > download_tries) {
 
   ndx <- which(chck)
   md_aux <- multi_download(urls = unlist(x = wget_all)[ndx],
-                           destfiles = paste0("./data/dl/wget/",
+                           destfiles = paste0(pth, "/wget/",
                                               wget_nms[ndx],
                                               ".sh"))
   chck <- md_aux$success
@@ -140,7 +136,7 @@ while (!any(chck) | aux > download_tries) {
 
 
 #########################
-fls <- list.files(path = "./data/dl/",
+fls <- list.files(path = paste0(pth, "/wget/")
                   full.names = TRUE)
 
 nfo <- as.data.table(x = file.info(fls))
