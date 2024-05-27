@@ -1,11 +1,15 @@
 library(curl); library(rvest)
 
+pth <- "./data/dl/"
+download_tries <- 15
+user_creds <- "eucp:EUCPWP3"
+
 url <- c("https://ensemblesrt3.dmi.dk/data/EUCP/output/REU-2/MOHC/ECMWF-ERAINT/evaluation/r1i1p1/HadREM3-RA-UM10.1/x0n1v1/1hr/prsn/",
          "https://ensemblesrt3.dmi.dk/data/EUCP/output/REU-2/MOHC/ECMWF-ERAINT/evaluation/r1i1p1/HadREM3-RA-UM10.1/x0n1v1/1hr/pr/",
          "https://ensemblesrt3.dmi.dk/data/EUCP/output/REU-2/MOHC/HadGEM3-GC3.1-N512/historical/r1i1p1/HadREM3-RA-UM10.1/x0n1v1/1hr/pr/",
          "https://ensemblesrt3.dmi.dk/data/EUCP/output/REU-2/MOHC/HadGEM3-GC3.1-N512/rcp85/r1i1p1/HadREM3-RA-UM10.1/x0n1v1/1hr/pr/")
 
-dest <- paste0("./data/dl/",
+dest <- paste0(pth,
                gsub(pattern = "https://ensemblesrt3.dmi.dk/data/EUCP/output/REU-2/MOHC/",
                     replacement = "",
                     x = url))
@@ -14,7 +18,7 @@ h <- new_handle()
 handle_setopt(
   handle = h,
   httpauth = 1,
-  userpwd = "eucp:EUCPWP3"
+  userpwd = user_creds
 )
 
 for (i in seq_along(along.with = url)) {
@@ -41,18 +45,18 @@ for (i in seq_along(along.with = url)) {
   md <- multi_download(urls = urls,
                        destfiles = paste0(dest[i],
                                           fls),
-                       userpwd = "eucp:EUCPWP3")
+                       userpwd = user_creds)
 
   chck <- md$success
   aux <- 0
 
-  while (any(!chck) | aux > 15) {
+  while (any(!chck) | aux > download_tries) {
 
     ndx <- which(chck)
     md_aux <- multi_download(urls = urls[ndx],
                              destfiles = paste0(dest[i],
                                                 fls[ndx]),
-                             userpwd = "eucp:EUCPWP3")
+                             userpwd = user_creds)
     chck <- md_aux$success
     aux <- aux + 1
   }
