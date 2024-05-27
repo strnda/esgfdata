@@ -62,47 +62,82 @@ meta
 #
 # https://esgf-node.llnl.gov/esg-search/wget?project=CORDEX&variable=pr&variable=tas&domain=EUR-11&domain=EUR-11i&domain=EUR-44&domain=EUR-44i&rcm_name=ALADIN63&driving_model=MOHC-HadGEM2-ES&time_frequency=1hr
 
-# wget_url <- "https://esgf-node.llnl.gov/esg-search/wget?"
-#
-# dir.create(path = "./data/dl",
-#            recursive = TRUE,
-#            showWarnings = FALSE)
-#
-# to_get_wget <- list()
-#
-# for (var in variable) {
-#   for (ens in meta[variable == "ensemble", id]) {
-#     for (exp in meta[variable == "experiment", id]) {
-#       for (dom in meta[variable == "domain", id]) {
-#         for (dr in meta[variable == "driving_model", id]) {
-#           for (rcm in meta[variable == "rcm_name", id]) {
-#
-#             to_get_wget[[paste0(var, ens, exp, dom, dr, rcm)]] <- paste(wget_url,
-#                                                                         "project=", project, "&",
-#                                                                         "variable=", var, "&",
-#                                                                         "domain=", dom, "&",
-#                                                                         "rcm_name=", rcm, "&",
-#                                                                         "driving_model=", dr, "&",
-#                                                                         "ensemble=", ens, "&",
-#                                                                         "experiment=", exp, "&",
-#                                                                         "time_frequency=", time_frequency,
-#                                                                         sep = "")
-#
-#
-#           }
-#         }
-#       }
-#     }
-#   }
-# }
-#
-# wget_all <- as.vector(do.call(what = rbind,
-#                               args = to_get_wget))
-#
-# multi_download(urls = unlist(x = wget_all),
-#                destfiles = paste0("./data/dl/",
-#                                   seq_along(along.with = wget_all),
-#                                   ".sh"))
+wget_url <- "https://esgf-node.llnl.gov/esg-search/wget?"
+
+dir.create(path = "./data/dl",
+           recursive = TRUE,
+           showWarnings = FALSE)
+
+to_get_wget <- list()
+
+for (var in variable) {
+  for (ens in meta[variable == "ensemble", id]) {
+    for (exp in meta[variable == "experiment", id]) {
+      for (dom in meta[variable == "domain", id]) {
+        for (dr in meta[variable == "driving_model", id]) {
+          for (rcm in meta[variable == "rcm_name", id]) {
+
+            to_get_wget[[paste0(var, ens, exp, dom, dr, rcm)]] <- paste(wget_url,
+                                                                        "project=", project, "&",
+                                                                        "variable=", var, "&",
+                                                                        "domain=", dom, "&",
+                                                                        "rcm_name=", rcm, "&",
+                                                                        "driving_model=", dr, "&",
+                                                                        "ensemble=", ens, "&",
+                                                                        "experiment=", exp, "&",
+                                                                        "time_frequency=", time_frequency,
+                                                                        sep = "")
+
+
+          }
+        }
+      }
+    }
+  }
+}
+
+wget_all <- as.vector(do.call(what = rbind,
+                              args = to_get_wget))
+
+wget_nms <- gsub(pattern = "\\&",
+                 replacement = "_",
+                 x = gsub(pattern = paste(wget_url,
+                                          "project=",
+                                          "variable=",
+                                          "domain=",
+                                          "rcm_name=",
+                                          "driving_model=",
+                                          "ensemble=",
+                                          "experiment=",
+                                          "time_frequency=",
+                                          "\\?",
+                                          sep = "|"),
+                          replacement = "",
+                          x = wget_all))
+
+dir.create(path = paste0(pth, "/wget/"),
+           recursive = TRUE,
+           showWarnings = FALSE)
+
+md_wget <- multi_download(urls = unlist(x = wget_all),
+                          destfiles = paste0("./data/dl/wget/",
+                                             wget_nms,
+                                             ".sh"))
+
+chck <- md_wget$success
+aux <- 0
+
+while (!any(chck) | aux > download_tries) {
+
+  ndx <- which(chck)
+  md_aux <- multi_download(urls = unlist(x = wget_all)[ndx],
+                           destfiles = paste0("./data/dl/wget/",
+                                              wget_nms[ndx],
+                                              ".sh"))
+  chck <- md_aux$success
+  aux <- aux + 1
+}
+
 
 #########################
 fls <- list.files(path = "./data/dl/",
