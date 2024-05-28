@@ -50,15 +50,21 @@ for (i in seq_along(along.with = url)) {
   chck <- md$success
   aux <- 0
 
-  while (any(!chck) | aux > download_tries) {
+  while ((any(!chck,
+              na.rm = TRUE))) {
 
-    ndx <- which(chck)
+    ndx <- which(!chck)
     md_aux <- multi_download(urls = urls[ndx],
                              destfiles = paste0(dest[i],
                                                 fls[ndx]),
                              userpwd = user_creds)
     chck <- md_aux$success
     aux <- aux + 1
+
+    if (aux > download_tries) {
+
+      break
+    }
   }
 
   close(con = con)

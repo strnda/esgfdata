@@ -93,7 +93,7 @@ for (var in variable) {
 }
 
 wget_all <- as.vector(do.call(what = rbind,
-                              args = to_get_wget))
+                              args = to_get_wget))#[10000:12000]
 
 wget_nms <- gsub(pattern = "\\&",
                  replacement = "_",
@@ -111,47 +111,56 @@ wget_nms <- gsub(pattern = "\\&",
                           replacement = "",
                           x = wget_all))
 
-dir.create(path = paste0(pth, "/wget/"),
+dir.create(path = file.path(pth, "/wget/"),
            recursive = TRUE,
            showWarnings = FALSE)
 
 md_wget <- multi_download(urls = unlist(x = wget_all),
-                          destfiles = paste0(pth, "/wget/",
-                                             wget_nms,
-                                             ".sh"))
+                          destfiles = file.path(pth, "/wget/",
+                                                paste0(wget_nms,
+                                                       ".sh")))
 
 chck <- md_wget$success
 aux <- 0
 
-while (!any(chck) | aux > download_tries) {
+while ((!any(chck,
+             na.rm = TRUE))) {
 
-  ndx <- which(chck)
+  ndx <- which(!chck)
   md_aux <- multi_download(urls = unlist(x = wget_all)[ndx],
-                           destfiles = paste0(pth, "/wget/",
-                                              wget_nms[ndx],
-                                              ".sh"))
+                           destfiles = file.path(pth, "/wget/",
+                                                 wget_nms[ndx],
+                                                 ".sh"))
   chck <- md_aux$success
   aux <- aux + 1
+
+  if (aux > download_tries) {
+
+    break
+  }
 }
 
 
 #########################
-fls <- list.files(path = paste0(pth, "/wget/"),
+fls <- list.files(path = file.path(pth, "wget"),
                   full.names = TRUE)
 
 nfo <- as.data.table(x = file.info(fls))
 
-# file.remove(fls[which(x = nfo$size <= 821)])
+file.remove(fls[which(x = nfo$size <= 42)])
 
 fls_valid <- fls[which(x = nfo$size > 821)]
 
-log_file <- paste(pth, "log.txt",
-                  sep = "/")
+log_file <- file.path(pth, "log.txt")
 
 if (!file.exists(log_file)) {
 
   file.create(log_file)
 }
+
+write(x = timestamp(),
+      file = log_file,
+      append = TRUE)
 
 for (i in seq_along(along.with = fls_valid)) {
 
@@ -180,37 +189,40 @@ for (i in seq_along(along.with = fls_valid)) {
   dr <- paste0(unlist(x = dr[-length(x = dr)]),
                collapse = "_")
 
-  dir.create(path = paste(pth, dr,
-                          sep = "/"),
+  dir.create(path = file.path(pth, dr),
              recursive = TRUE,
              showWarnings = FALSE)
 
   md <- multi_download(urls = dl$url,
-                       destfiles = paste(pth, dr, dl$name,
-                                         sep = "/"),
+                       destfiles = file.path(pth, dr, dl$name),
                        userpwd = user_creds)
 
   chck <- md$success
   aux <- 0
 
-  while (!any(chck) | aux > download_tries) {
+  while ((!any(chck,
+               na.rm = TRUE))) {
 
-    ndx <- which(chck)
+    ndx <- which(!chck)
     md_aux <- multi_download(urls = dl$url[ndx],
-                             destfiles = paste(pth, dr, dl$name[ndx],
-                                               sep = "/"),
+                             destfiles = file.path(pth, dr, dl$name[ndx]),
                              userpwd = user_creds)
     chck <- md_aux$success
     aux <- aux + 1
+
+    if (aux > download_tries) {
+
+      break
+    }
   }
 
   ####################  log  ##############################
 
   ifelse(test = aux > download_tries,
          yes = assign(x = "log_entry",
-                      value = paste("file", dl$name[md_aux$success], "failed to download")),
+                      value = paste("file failed to download:", md_aux$url)),
          no = assign(x = "log_entry",
-                     value = paste(dr, "downloaded correctly")))
+                     value = paste("sim downloaded correctly:", dr)))
 
   # log_entry <- paste("XXXX")
   write(x = log_entry,
