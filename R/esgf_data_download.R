@@ -14,8 +14,9 @@ rm(temp)
 
 ##### #####
 
-pth <- "./data/dl/"
+pth <- "~/Desktop/dl"
 download_tries <- 15
+server_timeout <- 20000
 user_creds <- "strnda:Nkrn!3Yyzm7rLDG"
 
 ##### #####
@@ -42,7 +43,7 @@ write(x = timestamp(),
 
 for (i in seq_along(along.with = fls_valid)) {
 
-  # i <- 1
+  # i <- 10
 
   wget <- readLines(con = fls_valid[i])
   dl_dt <- wget[eval(expr = parse(text = paste(which(wget %in% c("download_files=\"$(cat <<EOF--dataset.file.url.chksum_type.chksum",
@@ -73,19 +74,25 @@ for (i in seq_along(along.with = fls_valid)) {
 
   md <- multi_download(urls = dl$url,
                        destfiles = file.path(pth, dr, dl$name),
-                       userpwd = user_creds)
+                       userpwd = user_creds,
+                       timeout = server_timeout,
+                       resume = TRUE)
 
   chck <- md$success
+  chck[is.na(x = chck)] <- FALSE
   aux <- 0
 
-  while ((!any(chck,
-               na.rm = TRUE))) {
+  while (any(!chck,
+             na.rm = TRUE)) {
 
     ndx <- which(!chck)
     md_aux <- multi_download(urls = dl$url[ndx],
                              destfiles = file.path(pth, dr, dl$name[ndx]),
-                             userpwd = user_creds)
+                             userpwd = user_creds,
+                             timeout = server_timeout,
+                             resume = TRUE)
     chck <- md_aux$success
+    chck[is.na(x = chck)] <- FALSE
     aux <- aux + 1
 
     if (aux > download_tries) {
@@ -96,9 +103,9 @@ for (i in seq_along(along.with = fls_valid)) {
 
   ifelse(test = aux > download_tries,
          yes = assign(x = "log_entry",
-                      value = paste("file failed to download:", md_aux$url)),
+                      value = paste(Sys.time(), "file failed to download:", md_aux$url)),
          no = assign(x = "log_entry",
-                     value = paste("sim downloaded correctly:", dr)))
+                     value = paste(Sys.time(), "sim downloaded correctly:", dr)))
 
   write(x = log_entry,
         file = log_file,

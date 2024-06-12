@@ -14,8 +14,9 @@ rm(temp)
 
 ##### #####
 
-pth <- "./data/dl/"
-download_tries <- 15
+pth <- "~/Desktop/dl"
+download_tries <- 150
+server_timeout <- 60
 user_creds <- "strnda:Nkrn!3Yyzm7rLDG"
 
 project <- c("CORDEX")#, "CMIP5", "CMIP6")
@@ -125,20 +126,26 @@ dir.create(path = file.path(pth, "/wget/"),
 md_wget <- multi_download(urls = unlist(x = wget_all),
                           destfiles = file.path(pth, "/wget/",
                                                 paste0(wget_nms,
-                                                       ".sh")))
+                                                       ".sh")),
+                          timeout = server_timeout,
+                          resume = TRUE)
 
 chck <- md_wget$success
+chck[is.na(x = chck)] <- FALSE
 aux <- 0
 
-while ((!any(chck,
-             na.rm = TRUE))) {
+while (any(!chck,
+           na.rm = TRUE)) {
 
   ndx <- which(!chck)
   md_aux <- multi_download(urls = unlist(x = wget_all)[ndx],
                            destfiles = file.path(pth, "/wget/",
-                                                 wget_nms[ndx],
-                                                 ".sh"))
+                                                 paste0(wget_nms[ndx],
+                                                        ".sh")),
+                           timeout = server_timeout,
+                           resume = TRUE)
   chck <- md_aux$success
+  chck[is.na(x = chck)] <- FALSE
   aux <- aux + 1
 
   if (aux > download_tries) {
