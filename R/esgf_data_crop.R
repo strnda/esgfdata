@@ -1,7 +1,7 @@
 library(sf); library(terra);
 
 ## cesta ke stazenym datum
-fls_pth <- "/media/phill/Extreme SSD/CORDEX/orig_CORDEX1h/"
+fls_pth <- "/media/phill/Extreme Pro/data_download/"
 fls_pth <- gsub(pattern = " ",
                 replacement = "\\\\ ",
                 x = fls_pth)
@@ -12,7 +12,7 @@ symlink <- "~/Desktop/aux/"
 ## kam ulozit crop pro cz
 cz_pth <- "~/Desktop/aux/cz/"
 
-# system(command = paste("ln -s", fls_pth, symlink))
+system(command = paste("ln -s", fls_pth, symlink))
 
 ##### #####
 

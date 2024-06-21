@@ -17,7 +17,7 @@ fls_dr <- list.dirs(path = cz_pth,
 
 dur_all <- c(1, 2, 3, 6, 12, 24, 48)
 
-for (dir in fls_dr) {
+for (dir in fls_dr[2:length(x = dir)]) {
 
   # dir <- fls_dr[3]
 
@@ -110,7 +110,7 @@ for (dir in fls_dr) {
   mx_dir <- mx_dir[[1]][length(x = mx_dir[[1]])]
 
   fwrite(x = mx,
-         path = file.path(mx_pth,
+         file = file.path(mx_pth,
                           paste0(mx_dir,
                                  "_mx.csv")))
 
@@ -121,7 +121,7 @@ for (dir in fls_dr) {
                        xyFromCell(object = nc,
                                   cell = cell_id))
   fwrite(x = coords,
-         path = file.path(mx_pth,
+         file = file.path(mx_pth,
                           paste0(mx_dir,
                                  "_coord.csv")))
 }
