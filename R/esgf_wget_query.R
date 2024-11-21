@@ -17,63 +17,61 @@ gc()
 ##### #####
 
 pth <- "./data/"
-download_tries <- 2500
 server_timeout <- 60
-user_creds <- "strnda:Nkrn!3Yyzm7rLDG"
 
-project <- c("CORDEX")#, "CMIP5", "CMIP6")
-variable <- c("pr", "tas")
-time_frequency <- c("1hr")
-domain <- paste0("&domain=EUR-", c("11", "11i", "22", "44", "44i"),
-                 collapse = "")
-
-to_get <- c("domain", "experiment", "ensemble", "rcm_name", "driving_model")
-
+# project <- c("CORDEX")#, "CMIP5", "CMIP6")
+# variable <- c("pr", "tas")
+# time_frequency <- c("1hr")
+# domain <- paste0("&domain=EUR-", c("11", "11i", "22", "44", "44i"),
+#                  collapse = "")
+#
+# to_get <- c("domain", "experiment", "ensemble", "rcm_name", "driving_model")
+#
 ##### #####
-
-url <- paste0("https://esgf-node.llnl.gov/esg-search/search?type=Dataset&facets=*",
-              "&project=", project[1],
-              "&variable=", variable[1],
-              domain,
-              "&limit=0&format=application%2Fsolr%2Bjson")
-
-json_fetch <- fromJSON(txt = curl(url = url),
-                       flatten = TRUE)
-
-fct <- json_fetch[["facet_counts"]][["facet_fields"]]
-fct <- fct[names(x = fct) %in% to_get]
-
-fct_sub <- lapply(
-  X = fct,
-  FUN = function(x) {
-
-    if (length(x = x) == 0) {
-
-      out <- NULL
-    } else {
-
-      out <- matrix(data = unlist(x = x,
-                                  recursive = TRUE),
-                    ncol = 2,
-                    byrow = TRUE)
-      out <- as.data.table(x = out)
-      names(x = out) <- c("id", "number")
-    }
-
-    return(out)
-  }
-)
-
-meta <- rbindlist(l = fct_sub,
-                  idcol = "variable")
+#
+# url <- paste0("https://esgf-node.llnl.gov/esg-search/search?type=Dataset&facets=*",
+#               "&project=", project[1],
+#               "&variable=", variable[1],
+#               domain,
+#               "&limit=0&format=application%2Fsolr%2Bjson")
+#
+# json_fetch <- fromJSON(txt = curl(url = url),
+#                        flatten = TRUE)
+#
+# fct <- json_fetch[["facet_counts"]][["facet_fields"]]
+# fct <- fct[names(x = fct) %in% to_get]
+#
+# fct_sub <- lapply(
+#   X = fct,
+#   FUN = function(x) {
+#
+#     if (length(x = x) == 0) {
+#
+#       out <- NULL
+#     } else {
+#
+#       out <- matrix(data = unlist(x = x,
+#                                   recursive = TRUE),
+#                     ncol = 2,
+#                     byrow = TRUE)
+#       out <- as.data.table(x = out)
+#       names(x = out) <- c("id", "number")
+#     }
+#
+#     return(out)
+#   }
+# )
+#
+# meta <- rbindlist(l = fct_sub,
+#                   idcol = "variable")
 # meta
 # meta[, .(n = sum(x = as.numeric(x = number))),
 #      by = variable]
-
+#
 ##### #####
 
-# wget_url <- "https://esgf-node.llnl.gov/esg-search/wget?"
-#
+wget_url <- "https://esgf-node.llnl.gov/esg-search/wget?"
+
 # to_get_wget <- list()
 #
 # for (var in variable) {
