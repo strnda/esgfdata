@@ -10,12 +10,14 @@ if(length(to_instal) != 0) {
 temp <- lapply(X = lop,
                FUN = library,
                character.only = T)
-rm(temp)
+rm(temp, to_instal, lop)
+
+gc()
 
 ##### #####
 
-pth <- "~/Desktop/dl"
-download_tries <- 150
+pth <- "./data/"
+download_tries <- 2500
 server_timeout <- 60
 user_creds <- "strnda:Nkrn!3Yyzm7rLDG"
 
@@ -70,86 +72,100 @@ meta <- rbindlist(l = fct_sub,
 
 ##### #####
 
-wget_url <- "https://esgf-node.llnl.gov/esg-search/wget?"
+# wget_url <- "https://esgf-node.llnl.gov/esg-search/wget?"
+#
+# to_get_wget <- list()
+#
+# for (var in variable) {
+#   for (ens in meta[variable == "ensemble", id]) {
+#     for (exp in meta[variable == "experiment", id]) {
+#       for (dom in meta[variable == "domain", id]) {
+#         for (dr in meta[variable == "driving_model", id]) {
+#           for (rcm in meta[variable == "rcm_name", id]) {
+#
+#             to_get_wget[[paste0(var, ens, exp, dom, dr, rcm)]] <- paste(wget_url,
+#                                                                         "project=", project, "&",
+#                                                                         "variable=", var, "&",
+#                                                                         "domain=", dom, "&",
+#                                                                         "rcm_name=", rcm, "&",
+#                                                                         "driving_model=", dr, "&",
+#                                                                         "ensemble=", ens, "&",
+#                                                                         "experiment=", exp, "&",
+#                                                                         "time_frequency=", time_frequency,
+#                                                                         sep = "")
+#
+#
+#           }
+#         }
+#       }
+#     }
+#   }
+# }
+#
+# wget_all <- as.vector(do.call(what = rbind,
+#                               args = to_get_wget))
+#
+# write.table(x = wget_all,
+#             file = file.path(pth,
+#                              paste0("wget_", Sys.Date(), ".txt")))
 
-to_get_wget <- list()
+wget_all <- unlist(x = read.table(file = file.path(pth,
+                                                   paste0("wget_", Sys.Date(), ".txt"))))
 
-for (var in variable) {
-  for (ens in meta[variable == "ensemble", id]) {
-    for (exp in meta[variable == "experiment", id]) {
-      for (dom in meta[variable == "domain", id]) {
-        for (dr in meta[variable == "driving_model", id]) {
-          for (rcm in meta[variable == "rcm_name", id]) {
-
-            to_get_wget[[paste0(var, ens, exp, dom, dr, rcm)]] <- paste(wget_url,
-                                                                        "project=", project, "&",
-                                                                        "variable=", var, "&",
-                                                                        "domain=", dom, "&",
-                                                                        "rcm_name=", rcm, "&",
-                                                                        "driving_model=", dr, "&",
-                                                                        "ensemble=", ens, "&",
-                                                                        "experiment=", exp, "&",
-                                                                        "time_frequency=", time_frequency,
-                                                                        sep = "")
-
-
-          }
-        }
-      }
-    }
-  }
-}
-
-wget_all <- as.vector(do.call(what = rbind,
-                              args = to_get_wget))#[10000:12000]
-
-wget_nms <- gsub(pattern = "\\&",
-                 replacement = "_",
-                 x = gsub(pattern = paste(wget_url,
-                                          "project=",
-                                          "variable=",
-                                          "domain=",
-                                          "rcm_name=",
-                                          "driving_model=",
-                                          "ensemble=",
-                                          "experiment=",
-                                          "time_frequency=",
-                                          "\\?",
-                                          sep = "|"),
-                          replacement = "",
-                          x = wget_all))
+wget_all_l <- split(x = wget_all,
+                    f = ceiling(x = seq_along(along.with = wget_all) / 100))
 
 dir.create(path = file.path(pth, "/wget/"),
            recursive = TRUE,
            showWarnings = FALSE)
 
-md_wget <- multi_download(urls = unlist(x = wget_all),
-                          destfiles = file.path(pth, "/wget/",
-                                                paste0(wget_nms,
-                                                       ".sh")),
-                          timeout = server_timeout,
-                          resume = TRUE)
+out <- lapply(
+  X = wget_all_l,
+  function(x) {
+    wget_nms <- gsub(pattern = "\\&",
+                     replacement = "_",
+                     x = gsub(pattern = paste(wget_url,
+                                              "project=",
+                                              "variable=",
+                                              "domain=",
+                                              "rcm_name=",
+                                              "driving_model=",
+                                              "ensemble=",
+                                              "experiment=",
+                                              "time_frequency=",
+                                              "\\?",
+                                              sep = "|"),
+                              replacement = "",
+                              x = x))
 
-chck <- md_wget$success
-chck[is.na(x = chck)] <- FALSE
-aux <- 0
+    md_wget <- multi_download(urls = x,
+                              destfiles = file.path(pth, "/wget/",
+                                                    paste0(wget_nms,
+                                                           ".sh")),
+                              timeout = server_timeout,
+                              resume = TRUE)
 
-while (any(!chck,
-           na.rm = TRUE)) {
-
-  ndx <- which(!chck)
-  md_aux <- multi_download(urls = unlist(x = wget_all)[ndx],
-                           destfiles = file.path(pth, "/wget/",
-                                                 paste0(wget_nms[ndx],
-                                                        ".sh")),
-                           timeout = server_timeout,
-                           resume = TRUE)
-  chck <- md_aux$success
-  chck[is.na(x = chck)] <- FALSE
-  aux <- aux + 1
-
-  if (aux > download_tries) {
-
-    break
+    md_wget
   }
-}
+)
+
+
+# while (any(!chck,
+#            na.rm = TRUE)) {
+#
+#   ndx <- which(!chck)
+#   md_aux <- multi_download(urls = unlist(x = wget_all)[ndx],
+#                            destfiles = file.path(pth, "/wget/",
+#                                                  paste0(wget_nms[ndx],
+#                                                         ".sh")),
+#                            timeout = server_timeout,
+#                            resume = TRUE)
+#   chck <- md_aux$success
+#   chck[is.na(x = chck)] <- FALSE
+#   aux <- aux + 1
+#
+#   if (aux > download_tries) {
+#
+#     break
+#   }
+# }

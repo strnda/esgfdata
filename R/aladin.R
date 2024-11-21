@@ -13,7 +13,7 @@ nfo <- unique(x = as.data.table(x = t(x = sapply(X = fls_split,
                                                    unlist(i)[length(x = fls_split[[1]]) - c(5, 3)]
                                                  }))))
 
-for (ndx in 4:nrow(x = nfo)) {
+for (ndx in c(1, 3)) {
 
   fls_xtr <- aladin_fls[grepl(nfo$V1[ndx],
                               x = aladin_fls) &
@@ -46,11 +46,15 @@ for (ndx in 4:nrow(x = nfo)) {
                          dec = ",")
             dta[, let(date = as.IDate(x = Datum,
                                       format = "%Y/%m/%d"),
-                      SQ = NULL,
                       Prvek = NULL,
                       Sum = NULL,
                       Mean = NULL,
                       Datum = NULL)]
+
+            setnames(x = dta,
+                     old = "SQ",
+                     new = "cell_id")
+
             dta
           },
           silent = TRUE)
@@ -75,7 +79,7 @@ for (ndx in 4:nrow(x = nfo)) {
   }
 }
 
-test <- read.fst(path = "/media/phill/Extreme SSD/aladin_postpro/SSP2-4.5_T/2015.fst")
+test <- read.fst(path = "/media/phill/Extreme SSD/aladin_postpro/SSP2-4.5_SRA/2015.fst")
 
 ################################
 
@@ -91,7 +95,7 @@ dur_all <- c(1, 2, 3, 6, 12, 24, 48)
 # i <- 1
 # dir <- yr_dta_dir[2]
 # dur <- 2
-for (dir in yr_dta_dir[2]) {
+for (dir in yr_dta_dir) {
 
   yr_fls <- list.files(path = dir,
                        pattern = "fst",
@@ -133,7 +137,7 @@ for (dir in yr_dta_dir[2]) {
     }
 
     dta_aux_m <- melt(data = dta_aux,
-                      id.vars = "date")
+                      id.vars = c("date", "cell_id"))
     yr <- strsplit(x =  yr_fls[i],
                    split = "/")
     yr <- gsub(pattern = "\\.fst",
@@ -153,11 +157,11 @@ for (dir in yr_dta_dir[2]) {
                                          na.rm = TRUE)]
             mx <- dta_aux_m[, .(mx = max(agg,
                                          na.rm = TRUE)),
-                            by = .(variable,
+                            by = .(cell_id,
                                    year(x = date))]
 
             out <- dcast(data = mx[year %like% yr,],
-                         formula = year ~ variable,
+                         formula = year ~ cell_id,
                          value.var = "mx")
             out[, dur := dur]
 
