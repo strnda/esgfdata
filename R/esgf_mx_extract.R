@@ -1,7 +1,9 @@
-library(sf); library(terra); library(data.table); library(fst);
+library(sf); library(terra);
+library(data.table); library(fst);
+library(parallel)
 
 ## cesta ke cropnutym souborum
-cz_pth <- "~/Desktop/aux/cz/"
+cz_pth <- "/media/phill/Extreme SSD/CORDEX_1h/"
 
 ## kam ulozit maxima
 mx_pth <- "~/Desktop/aux/mx/"
@@ -13,13 +15,15 @@ dir.create(path = mx_pth,
            recursive = TRUE)
 
 fls_dr <- list.dirs(path = cz_pth,
-                    full.names = TRUE)[-1]
+                    full.names = TRUE)[-1:-2]
 
 dur_all <- c(1, 2, 3, 6, 12, 24, 48)
 
-for (dir in fls_dr[2:length(x = dir)]) {
+ncore <- 6
 
-  # dir <- fls_dr[3]
+for (dir in fls_dr[12:88]) {
+
+  # dir <- fls_dr[12]
 
   cz_fls <- list.files(path = dir,
                        pattern = ".nc",
@@ -47,9 +51,9 @@ for (dir in fls_dr[2:length(x = dir)]) {
                        cz_fls[i + 1]))
     }
 
-    yr <- unique(x = year(x = time(x = rast(x = cz_fls[i]))))
+    yr <- unique(x = year(x = time(x = rast(x = cz_fls[i]))))[1]
 
-    MX[[i]] <- lapply(
+    MX[[i]] <- mclapply(
       X = dur_all,
       FUN = function(dur) {
 
@@ -95,7 +99,8 @@ for (dir in fls_dr[2:length(x = dir)]) {
           return(out)
         }
 
-      }
+      },
+      mc.cores = ncore
     )
 
     MX[[i]] <- rbindlist(l = MX[[i]])
@@ -116,12 +121,12 @@ for (dir in fls_dr[2:length(x = dir)]) {
 
   ## xy
 
-  cell_id <- 1:(ncol(x = mx) - 2)
-  coords <- data.table(cell_id = cell_id,
-                       xyFromCell(object = nc,
-                                  cell = cell_id))
-  fwrite(x = coords,
-         file = file.path(mx_pth,
-                          paste0(mx_dir,
-                                 "_coord.csv")))
+  # cell_id <- 1:(ncol(x = mx) - 2)
+  # coords <- data.table(cell_id = cell_id,
+  #                      xyFromCell(object = nc,
+  #                                 cell = cell_id))
+  # fwrite(x = coords,
+  #        file = file.path(mx_pth,
+  #                         paste0(mx_dir,
+  #                                "_coord.csv")))
 }
