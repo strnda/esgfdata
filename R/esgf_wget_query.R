@@ -1,4 +1,4 @@
-lop <- c("data.table", "curl", "jsonlite")
+lop <- c("data.table", "curl", "jsonlite", "fst")
 
 to_instal <- lop[which(x = !(lop %in% installed.packages()[,"Package"]))]
 
@@ -17,7 +17,11 @@ gc()
 ##### #####
 
 pth <- "./data/"
-server_timeout <- 60
+server_timeout <- 600
+
+dl_attempt <- 10
+
+wget_url <- "https://esgf-node.llnl.gov/esg-search/wget?"
 
 # project <- c("CORDEX")#, "CMIP5", "CMIP6")
 # variable <- c("pr", "tas")
@@ -69,8 +73,6 @@ server_timeout <- 60
 #      by = variable]
 #
 ##### #####
-
-wget_url <- "https://esgf-node.llnl.gov/esg-search/wget?"
 
 # to_get_wget <- list()
 #
@@ -154,23 +156,48 @@ out <- lapply(
   }
 )
 
+out <- rbindlist(l = out)
+out[is.na(x = success), success := FALSE]
 
-# while (any(!chck,
-#            na.rm = TRUE)) {
-#
-#   ndx <- which(!chck)
-#   md_aux <- multi_download(urls = unlist(x = wget_all)[ndx],
-#                            destfiles = file.path(pth, "/wget/",
-#                                                  paste0(wget_nms[ndx],
-#                                                         ".sh")),
-#                            timeout = server_timeout,
-#                            resume = TRUE)
-#   chck <- md_aux$success
-#   chck[is.na(x = chck)] <- FALSE
-#   aux <- aux + 1
-#
-#   if (aux > download_tries) {
-#
-#     break
-#   }
-# }
+# write_fst(x = out[, .(success, url, destfile, error)],
+#           path = "./data/wget_dl.fst")
+
+out <- read_fst(path = "./data/wget_dl.fst",
+                as.data.table = TRUE)
+
+aux <- 0
+
+while (any(!out$success) | aux > dl_attempt) {
+
+  to_dl <- out[which(x = !success), .(url, destfile)]
+
+  to_dl_l <- split(x = to_dl,
+                   f = ceiling(x = 1:dim(x = to_dl)[1] / 100))
+
+  out <- lapply(
+    X = to_dl_l,
+    FUN = function(x) {
+
+      x <- to_dl_l[[1]]
+
+      md_wget <- multi_download(urls = x$url,
+                                destfiles = x$destfile,
+                                timeout = server_timeout,
+                                resume = TRUE)
+
+      fls <- list.files(path = file.path(pth, "wget"),
+                        full.names = TRUE)
+
+      nfo <- as.data.table(x = file.info(fls))
+
+      file.remove(fls[which(x = nfo$size <= 42)])
+
+      return(md_wget)
+    }
+  )
+
+  out <- rbindlist(l = out)
+  out[is.na(x = success), success := FALSE]
+
+  aux <- aux + 1
+}
