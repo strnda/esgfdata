@@ -19,8 +19,8 @@ gc()
 # arguments ---------------------------
 
 pth <- "./data/"
-server_timeout <- 600
 
+server_timeout <- 600
 dl_attempt <- 10
 
 node <- "https://esgf-data.dkrz.de/esg-search/"
@@ -33,6 +33,10 @@ domain <- paste0("&domain=EUR-", c("11", "11i", "22", "44", "44i"),
                  collapse = "")
 
 to_get <- c("domain", "experiment", "ensemble", "rcm_name", "driving_model", "time_frequency", "variable")
+
+user_creds <- NULL
+
+source(file = "creds.R")
 
 # info fetch ---------------------------
 

@@ -20,9 +20,13 @@ gc()
 
 wget_pth <- "./data/wget"
 dl_pth <- "~/Desktop/dl"
+
 download_tries <- 15
 server_timeout <- 20000
-user_creds <- "strnda:Nkrn!3Yyzm7rLDG"
+
+user_creds <- NULL
+
+source(file = "creds.R")
 
 # paths setup ---------------------------
 
