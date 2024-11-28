@@ -1,4 +1,5 @@
 # packages ---------------------------
+
 lop <- c("data.table", "curl", "digest")
 
 to_instal <- lop[which(x = !(lop %in% installed.packages()[,"Package"]))]
