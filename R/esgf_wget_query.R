@@ -31,7 +31,7 @@ wget_url <- "https://esgf-node.llnl.gov/esg-search/wget?"
 #
 # to_get <- c("domain", "experiment", "ensemble", "rcm_name", "driving_model")
 #
-##### #####
+# #### #####
 #
 # url <- paste0("https://esgf-node.llnl.gov/esg-search/search?type=Dataset&facets=*",
 #               "&project=", project[1],
@@ -72,8 +72,8 @@ wget_url <- "https://esgf-node.llnl.gov/esg-search/wget?"
 # meta[, .(n = sum(x = as.numeric(x = number))),
 #      by = variable]
 #
-##### #####
-
+# #### #####
+#
 # to_get_wget <- list()
 #
 # for (var in variable) {
@@ -109,8 +109,12 @@ wget_url <- "https://esgf-node.llnl.gov/esg-search/wget?"
 #             file = file.path(pth,
 #                              paste0("wget_", Sys.Date(), ".txt")))
 
-wget_all <- unlist(x = read.table(file = file.path(pth,
-                                                   paste0("wget_", Sys.Date(), ".txt"))))
+wget_fls <- list.files(path = "./data/",
+                       pattern = "wget_",
+                       full.names = TRUE)
+
+wget_fls
+wget_all <- unlist(x = read.table(file = wget_fls[2]))
 
 wget_all_l <- split(x = wget_all,
                     f = ceiling(x = seq_along(along.with = wget_all) / 100))
@@ -150,7 +154,7 @@ out <- lapply(
 
     nfo <- as.data.table(x = file.info(fls))
 
-    file.remove(fls[which(x = nfo$size <= 42)])
+    file.remove(fls[which(x = nfo$size <= 7000)])
 
     return(md_wget)
   }
@@ -159,11 +163,11 @@ out <- lapply(
 out <- rbindlist(l = out)
 out[is.na(x = success), success := FALSE]
 
-# write_fst(x = out[, .(success, url, destfile, error)],
-#           path = "./data/wget_dl.fst")
+write_fst(x = out[, .(success, url, destfile, error)],
+          path = "./data/wget_dl.fst")
 
-out <- read_fst(path = "./data/wget_dl.fst",
-                as.data.table = TRUE)
+# out <- read_fst(path = "./data/wget_dl.fst",
+#                 as.data.table = TRUE)
 
 aux <- 0
 
@@ -201,3 +205,15 @@ while (any(!out$success) | aux > dl_attempt) {
 
   aux <- aux + 1
 }
+
+
+# test <- list()
+#
+# for (url in wget_all) {
+#
+#   test[[url]] <- sub(pattern = ".*Content-Length: (\\d+).*",
+#                      replacement = "\\1",
+#                      x = rawToChar(x = curl_fetch_memory(url = url)$headers))
+# }
+
+
