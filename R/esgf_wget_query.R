@@ -1,4 +1,4 @@
-##### #####
+# packages ---------------------------
 lop <- c("data.table", "curl", "jsonlite", "fst")
 
 to_instal <- lop[which(x = !(lop %in% installed.packages()[,"Package"]))]
@@ -15,7 +15,7 @@ rm(temp, to_instal, lop)
 
 gc()
 
-##### #####
+# arguments ---------------------------
 
 pth <- "./data/"
 server_timeout <- 600
@@ -33,7 +33,7 @@ domain <- paste0("&domain=EUR-", c("11", "11i", "22", "44", "44i"),
 
 to_get <- c("domain", "experiment", "ensemble", "rcm_name", "driving_model", "time_frequency", "variable")
 
-##### #####
+# info fetch ---------------------------
 
 url <- paste0(node, "search?type=Dataset&facets=*",
               switch(EXPR = is.null(x = project) + 1,
@@ -82,7 +82,7 @@ meta <- rbindlist(l = fct_sub,
 meta
 
 
-#### #####
+# wget download ---------------------------
 
 to_get_wget <- list()
 

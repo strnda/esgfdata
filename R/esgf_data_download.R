@@ -1,3 +1,4 @@
+# packages ---------------------------
 lop <- c("data.table", "curl", "digest")
 
 to_instal <- lop[which(x = !(lop %in% installed.packages()[,"Package"]))]
@@ -10,18 +11,21 @@ if(length(to_instal) != 0) {
 temp <- lapply(X = lop,
                FUN = library,
                character.only = T)
-rm(temp)
+rm(temp, to_instal, lop)
 
-##### #####
+gc()
 
-pth <- "~/Desktop/dl"
+# argumnets ---------------------------
+
+wget_pth <- "./data/wget"
+dl_pth <- "~/Desktop/dl"
 download_tries <- 15
 server_timeout <- 20000
 user_creds <- "strnda:Nkrn!3Yyzm7rLDG"
 
-##### #####
+# paths setup ---------------------------
 
-fls <- list.files(path = file.path(pth, "wget"),
+fls <- list.files(path = file.path(wget_pth),
                   full.names = TRUE)
 
 nfo <- as.data.table(x = file.info(fls))
@@ -30,7 +34,11 @@ file.remove(fls[which(x = nfo$size <= 42)])
 
 fls_valid <- fls[which(x = nfo$size > 821)]
 
-log_file <- file.path(pth, "log.txt")
+dir.create(path = file.path(dl_pth),
+           recursive = TRUE,
+           showWarnings = FALSE)
+
+log_file <- file.path(dl_pth, "log.txt")
 
 if (!file.exists(log_file)) {
 
@@ -41,13 +49,15 @@ write(x = timestamp(),
       file = log_file,
       append = TRUE)
 
+# file download ---------------------------
+
 for (i in seq_along(along.with = fls_valid)) {
 
   # i <- 10
 
   wget <- readLines(con = fls_valid[i])
-  dl_dt <- wget[eval(expr = parse(text = paste(which(wget %in% c("download_files=\"$(cat <<EOF--dataset.file.url.chksum_type.chksum",
-                                                                 "EOF--dataset.file.url.chksum_type.chksum")),
+  dl_dt <- wget[eval(expr = parse(text = paste(which(x = wget %in% c("download_files=\"$(cat <<EOF--dataset.file.url.chksum_type.chksum",
+                                                                     "EOF--dataset.file.url.chksum_type.chksum")),
                                                collapse = ":")))]
   dl_dt <- dl_dt[c(-1, -length(dl_dt))]
   dl_dt <- gsub(pattern = "'",
@@ -68,12 +78,12 @@ for (i in seq_along(along.with = fls_valid)) {
   dr <- paste0(unlist(x = dr[-length(x = dr)]),
                collapse = "_")
 
-  dir.create(path = file.path(pth, dr),
+  dir.create(path = file.path(dl_pth, dr),
              recursive = TRUE,
              showWarnings = FALSE)
 
   md <- multi_download(urls = dl$url,
-                       destfiles = file.path(pth, dr, dl$name),
+                       destfiles = file.path(dl_pth, dr, dl$name),
                        userpwd = user_creds,
                        timeout = server_timeout,
                        resume = TRUE)
@@ -87,7 +97,7 @@ for (i in seq_along(along.with = fls_valid)) {
 
     ndx <- which(!chck)
     md_aux <- multi_download(urls = dl$url[ndx],
-                             destfiles = file.path(pth, dr, dl$name[ndx]),
+                             destfiles = file.path(dl_pth, dr, dl$name[ndx]),
                              userpwd = user_creds,
                              timeout = server_timeout,
                              resume = TRUE)
@@ -102,7 +112,7 @@ for (i in seq_along(along.with = fls_valid)) {
   }
 
   md_aux <- multi_download(urls = dl$url,
-                           destfiles = file.path(pth, dr, dl$name),
+                           destfiles = file.path(dl_pth, dr, dl$name),
                            userpwd = user_creds,
                            timeout = server_timeout,
                            resume = TRUE)
@@ -122,8 +132,3 @@ for (i in seq_along(along.with = fls_valid)) {
 write(x = timestamp(),
       file = log_file,
       append = TRUE)
-
-# digest(object = paste(pth, dr, dl$name[1],
-#                       sep = "/"),
-#        algo = "sha256")
-# dl[1,]
