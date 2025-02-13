@@ -154,7 +154,7 @@ out <- lapply(
 
     nfo <- as.data.table(x = file.info(fls))
 
-    file.remove(fls[which(x = nfo$size <= 7000)])
+    file.remove(fls[which(x = nfo$size <= 42)])
 
     return(md_wget)
   }

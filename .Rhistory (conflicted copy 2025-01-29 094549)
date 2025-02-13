@@ -1,0 +1,512 @@
+ggplot(data = dta_sub[, c(1, 2)],
+mapping = aes(x = date,
+y = .data[[names(x = dta_sub)[2]]])) +
+geom_point(colour = "darkgreen",
+na.rm = TRUE) +
+stat_smooth(method = "lm") +  # Linear model fit
+theme_bw()
+# Step 18: Add quantiles and horizontal lines
+dta_m[, q := quantile(x = value, probs = .95, na.rm = TRUE), by = variable]
+ggplot(data = dta_m) +
+geom_line(mapping = aes(x = date,
+y = value,
+colour = variable),
+na.rm = TRUE) +
+geom_hline(mapping = aes(yintercept = q),
+linetype = 2,
+colour = "red3") +
+facet_wrap(facets = ~variable)
+lop <- c("data.table", "curl", "jsonlite", "fst")
+to_instal <- lop[which(x = !(lop %in% installed.packages()[,"Package"]))]
+if(length(to_instal) != 0) {
+install.packages(to_instal)
+}
+temp <- lapply(X = lop,
+FUN = library,
+character.only = T)
+rm(temp, to_instal, lop)
+gc()
+pth <- "./data/"
+server_timeout <- 600
+dl_attempt <- 10
+wget_url <- "https://esgf-node.llnl.gov/esg-search/wget?"
+wget_fls <- list.files(path = "./data/",
+pattern = "wget_",
+full.names = TRUE)
+wget_fls
+wget_all <- unlist(x = read.table(file = wget_fls[2]))
+wget_all_l <- split(x = wget_all,
+f = ceiling(x = seq_along(along.with = wget_all) / 100))
+dir.create(path = file.path(pth, "/wget/"),
+recursive = TRUE,
+showWarnings = FALSE)
+out <- lapply(
+X = wget_all_l,
+function(x) {
+wget_nms <- gsub(pattern = "\\&",
+replacement = "_",
+x = gsub(pattern = paste(wget_url,
+"project=",
+"variable=",
+"domain=",
+"rcm_name=",
+"driving_model=",
+"ensemble=",
+"experiment=",
+"time_frequency=",
+"\\?",
+sep = "|"),
+replacement = "",
+x = x))
+md_wget <- multi_download(urls = x,
+destfiles = file.path(pth, "/wget/",
+paste0(wget_nms,
+".sh")),
+timeout = server_timeout,
+resume = TRUE)
+fls <- list.files(path = file.path(pth, "wget"),
+full.names = TRUE)
+nfo <- as.data.table(x = file.info(fls))
+file.remove(fls[which(x = nfo$size <= 42)])
+return(md_wget)
+}
+)
+x <- wget_all_l[[1]]
+wget_nms <- gsub(pattern = "\\&",
+replacement = "_",
+x = gsub(pattern = paste(wget_url,
+"project=",
+"variable=",
+"domain=",
+"rcm_name=",
+"driving_model=",
+"ensemble=",
+"experiment=",
+"time_frequency=",
+"\\?",
+sep = "|"),
+replacement = "",
+x = x))
+md_wget <- multi_download(urls = x,
+destfiles = file.path(pth, "/wget/",
+paste0(wget_nms,
+".sh")),
+timeout = server_timeout,
+resume = TRUE)
+fls <- list.files(path = file.path(pth, "wget"),
+full.names = TRUE)
+nfo <- as.data.table(x = file.info(fls))
+file.remove(fls[which(x = nfo$size <= 42)])
+fls
+x
+View(md_wget)
+nfo
+file.remove(fls[which(x = nfo$size <= 7000)])
+out <- lapply(
+X = wget_all_l,
+function(x) {
+wget_nms <- gsub(pattern = "\\&",
+replacement = "_",
+x = gsub(pattern = paste(wget_url,
+"project=",
+"variable=",
+"domain=",
+"rcm_name=",
+"driving_model=",
+"ensemble=",
+"experiment=",
+"time_frequency=",
+"\\?",
+sep = "|"),
+replacement = "",
+x = x))
+md_wget <- multi_download(urls = x,
+destfiles = file.path(pth, "/wget/",
+paste0(wget_nms,
+".sh")),
+timeout = server_timeout,
+resume = TRUE)
+fls <- list.files(path = file.path(pth, "wget"),
+full.names = TRUE)
+nfo <- as.data.table(x = file.info(fls))
+file.remove(fls[which(x = nfo$size <= 7000)])
+return(md_wget)
+}
+)
+lop <- c("data.table", "curl", "jsonlite", "fst")
+to_instal <- lop[which(x = !(lop %in% installed.packages()[,"Package"]))]
+if(length(to_instal) != 0) {
+install.packages(to_instal)
+}
+temp <- lapply(X = lop,
+FUN = library,
+character.only = T)
+rm(temp, to_instal, lop)
+gc()
+##### #####
+pth <- "./data/"
+server_timeout <- 600
+dl_attempt <- 10
+wget_url <- "https://esgf-node.llnl.gov/esg-search/wget?"
+# project <- c("CORDEX")#, "CMIP5", "CMIP6")
+# variable <- c("pr", "tas")
+# time_frequency <- c("1hr")
+# domain <- paste0("&domain=EUR-", c("11", "11i", "22", "44", "44i"),
+#                  collapse = "")
+#
+# to_get <- c("domain", "experiment", "ensemble", "rcm_name", "driving_model")
+#
+# #### #####
+#
+# url <- paste0("https://esgf-node.llnl.gov/esg-search/search?type=Dataset&facets=*",
+#               "&project=", project[1],
+#               "&variable=", variable[1],
+#               domain,
+#               "&limit=0&format=application%2Fsolr%2Bjson")
+#
+# json_fetch <- fromJSON(txt = curl(url = url),
+#                        flatten = TRUE)
+#
+# fct <- json_fetch[["facet_counts"]][["facet_fields"]]
+# fct <- fct[names(x = fct) %in% to_get]
+#
+# fct_sub <- lapply(
+#   X = fct,
+#   FUN = function(x) {
+#
+#     if (length(x = x) == 0) {
+#
+#       out <- NULL
+#     } else {
+#
+#       out <- matrix(data = unlist(x = x,
+#                                   recursive = TRUE),
+#                     ncol = 2,
+#                     byrow = TRUE)
+#       out <- as.data.table(x = out)
+#       names(x = out) <- c("id", "number")
+#     }
+#
+#     return(out)
+#   }
+# )
+#
+# meta <- rbindlist(l = fct_sub,
+#                   idcol = "variable")
+# meta
+# meta[, .(n = sum(x = as.numeric(x = number))),
+#      by = variable]
+#
+# #### #####
+#
+# to_get_wget <- list()
+#
+# for (var in variable) {
+#   for (ens in meta[variable == "ensemble", id]) {
+#     for (exp in meta[variable == "experiment", id]) {
+#       for (dom in meta[variable == "domain", id]) {
+#         for (dr in meta[variable == "driving_model", id]) {
+#           for (rcm in meta[variable == "rcm_name", id]) {
+#
+#             to_get_wget[[paste0(var, ens, exp, dom, dr, rcm)]] <- paste(wget_url,
+#                                                                         "project=", project, "&",
+#                                                                         "variable=", var, "&",
+#                                                                         "domain=", dom, "&",
+#                                                                         "rcm_name=", rcm, "&",
+#                                                                         "driving_model=", dr, "&",
+#                                                                         "ensemble=", ens, "&",
+#                                                                         "experiment=", exp, "&",
+#                                                                         "time_frequency=", time_frequency,
+#                                                                         sep = "")
+#
+#
+#           }
+#         }
+#       }
+#     }
+#   }
+# }
+#
+# wget_all <- as.vector(do.call(what = rbind,
+#                               args = to_get_wget))
+#
+# write.table(x = wget_all,
+#             file = file.path(pth,
+#                              paste0("wget_", Sys.Date(), ".txt")))
+wget_fls <- list.files(path = "./data/",
+pattern = "wget_",
+full.names = TRUE)
+wget_fls
+wget_all <- unlist(x = read.table(file = wget_fls[2]))
+wget_all_l <- split(x = wget_all,
+f = ceiling(x = seq_along(along.with = wget_all) / 100))
+dir.create(path = file.path(pth, "/wget/"),
+recursive = TRUE,
+showWarnings = FALSE)
+out <- lapply(
+X = wget_all_l,
+function(x) {
+wget_nms <- gsub(pattern = "\\&",
+replacement = "_",
+x = gsub(pattern = paste(wget_url,
+"project=",
+"variable=",
+"domain=",
+"rcm_name=",
+"driving_model=",
+"ensemble=",
+"experiment=",
+"time_frequency=",
+"\\?",
+sep = "|"),
+replacement = "",
+x = x))
+md_wget <- multi_download(urls = x,
+destfiles = file.path(pth, "/wget/",
+paste0(wget_nms,
+".sh")),
+timeout = server_timeout,
+resume = TRUE)
+fls <- list.files(path = file.path(pth, "wget"),
+full.names = TRUE)
+nfo <- as.data.table(x = file.info(fls))
+file.remove(fls[which(x = nfo$size <= 7000)])
+return(md_wget)
+}
+)
+View(wget_all_l)
+library(ncdf4)
+nc_open(filename = "../../../Desktop/zaloha_dat/aux/cz/pr_EUR-11_CNRM-CERFACS-CNRM-CM5_historical_r1i1p1_CLMcom-ETH-COSMO-crCLIM-v1-1_v1_1hr/cz_pr_EUR-11_CNRM-CERFACS-CNRM-CM5_historical_r1i1p1_CLMcom-ETH-COSMO-crCLIM-v1-1_v1_1hr_195101010030-195112312330.nc")
+lop <- c("data.table", "curl", "jsonlite", "fst")
+to_instal <- lop[which(x = !(lop %in% installed.packages()[,"Package"]))]
+if(length(to_instal) != 0) {
+install.packages(to_instal)
+}
+temp <- lapply(X = lop,
+FUN = library,
+character.only = T)
+rm(temp, to_instal, lop)
+gc()
+pth <- "./data/"
+server_timeout <- 600
+dl_attempt <- 10
+node <- "https://esgf-data.dkrz.de/esg-search/"
+project <- c("CORDEX")#, "CMIP5", "CMIP6")
+variable <- c("pr", "tas")
+time_frequency <- c("1hr")
+domain <- paste0("&domain=EUR-", c("11", "11i", "22", "44", "44i"),
+collapse = "")
+to_get <- c("domain", "experiment", "ensemble", "rcm_name", "driving_model", "time_frequency", "variable")
+user_creds <- NULL
+source(file = "creds.R")
+url <- paste0(node, "search?type=Dataset&facets=*",
+switch(EXPR = is.null(x = project) + 1,
+paste0("&project=", project),
+NULL),
+switch(EXPR = is.null(x = variable) + 1,
+paste0("&variable=", variable),
+NULL),
+switch(EXPR = is.null(x = domain) + 1,
+domain,
+NULL),
+switch(EXPR = is.null(x = time_frequency) + 1,
+paste0("&time_frequency=", time_frequency),
+NULL),
+"&limit=0&format=application%2Fsolr%2Bjson")
+json_fetch <- fromJSON(txt = curl(url = url[1]),
+flatten = TRUE)
+fct <- json_fetch[["facet_counts"]][["facet_fields"]]
+fct <- fct[names(x = fct) %in% to_get]
+fct_sub <- lapply(
+X = fct,
+FUN = function(x) {
+if (length(x = x) == 0) {
+out <- NULL
+} else {
+out <- matrix(data = unlist(x = x,
+recursive = TRUE),
+ncol = 2,
+byrow = TRUE)
+out <- as.data.table(x = out)
+names(x = out) <- c("id", "number")
+}
+return(out)
+}
+)
+meta <- rbindlist(l = fct_sub,
+idcol = "variable")
+meta
+View(meta)
+xtable::xtable(cars)
+View(meta)
+lop <- c("data.table", "curl", "jsonlite", "fst")
+to_instal <- lop[which(x = !(lop %in% installed.packages()[,"Package"]))]
+if(length(to_instal) != 0) {
+install.packages(to_instal)
+}
+temp <- lapply(X = lop,
+FUN = library,
+character.only = T)
+rm(temp, to_instal, lop)
+gc()
+pth <- "./data/"
+server_timeout <- 600
+dl_attempt <- 10
+wget_url <- "https://esgf-node.llnl.gov/esg-search/wget?"
+project <- c("CORDEX")#, "CMIP5", "CMIP6")
+variable <- c("pr", "tas")
+time_frequency <- c("1hr")
+domain <- paste0("&domain=EUR-", c("11", "11i", "22", "44", "44i"),
+collapse = "")
+to_get <- c("domain", "experiment", "ensemble", "rcm_name", "driving_model")
+url <- paste0("https://esgf-node.llnl.gov/esg-search/search?type=Dataset&facets=*",
+"&project=", project[1],
+"&variable=", variable[1],
+domain,
+"&limit=0&format=application%2Fsolr%2Bjson")
+json_fetch <- fromJSON(txt = curl(url = url),
+flatten = TRUE)
+fct <- json_fetch[["facet_counts"]][["facet_fields"]]
+fct <- fct[names(x = fct) %in% to_get]
+fct_sub <- lapply(
+X = fct,
+FUN = function(x) {
+if (length(x = x) == 0) {
+out <- NULL
+} else {
+out <- matrix(data = unlist(x = x,
+recursive = TRUE),
+ncol = 2,
+byrow = TRUE)
+out <- as.data.table(x = out)
+names(x = out) <- c("id", "number")
+}
+return(out)
+}
+)
+meta <- rbindlist(l = fct_sub,
+idcol = "variable")
+meta
+meta[, .(n = sum(x = as.numeric(x = number))),
+by = variable]
+to_get_wget <- list()
+for (var in variable) {
+for (ens in meta[variable == "ensemble", id]) {
+for (exp in meta[variable == "experiment", id]) {
+for (dom in meta[variable == "domain", id]) {
+for (dr in meta[variable == "driving_model", id]) {
+for (rcm in meta[variable == "rcm_name", id]) {
+to_get_wget[[paste0(var, ens, exp, dom, dr, rcm)]] <- paste(wget_url,
+"project=", project, "&",
+"variable=", var, "&",
+"domain=", dom, "&",
+"rcm_name=", rcm, "&",
+"driving_model=", dr, "&",
+"ensemble=", ens, "&",
+"experiment=", exp, "&",
+"time_frequency=", time_frequency,
+sep = "")
+}
+}
+}
+}
+}
+}
+wget_all <- as.vector(do.call(what = rbind,
+args = to_get_wget))
+wget_all_l <- split(x = wget_all,
+f = ceiling(x = seq_along(along.with = wget_all) / 100))
+dir.create(path = file.path(pth, "/wget/"),
+recursive = TRUE,
+showWarnings = FALSE)
+out <- lapply(
+X = wget_all_l,
+function(x) {
+wget_nms <- gsub(pattern = "\\&",
+replacement = "_",
+x = gsub(pattern = paste(wget_url,
+"project=",
+"variable=",
+"domain=",
+"rcm_name=",
+"driving_model=",
+"ensemble=",
+"experiment=",
+"time_frequency=",
+"\\?",
+sep = "|"),
+replacement = "",
+x = x))
+md_wget <- multi_download(urls = x,
+destfiles = file.path(pth, "/wget/",
+paste0(wget_nms,
+".sh")),
+timeout = server_timeout,
+resume = TRUE)
+fls <- list.files(path = file.path(pth, "wget"),
+full.names = TRUE)
+nfo <- as.data.table(x = file.info(fls))
+file.remove(fls[which(x = nfo$size <= 42)])
+return(md_wget)
+}
+)
+View(meta)
+lop <- c("data.table", "curl", "jsonlite", "fst")
+to_instal <- lop[which(x = !(lop %in% installed.packages()[,"Package"]))]
+if(length(to_instal) != 0) {
+install.packages(to_instal)
+}
+temp <- lapply(X = lop,
+FUN = library,
+character.only = T)
+rm(temp, to_instal, lop)
+gc()
+pth <- "./data/"
+server_timeout <- 600
+dl_attempt <- 10
+node <- "https://esgf-data.dkrz.de/esg-search/"
+project <- c("CORDEX")#, "CMIP5", "CMIP6")
+variable <- c("pr", "tas")
+time_frequency <- c("1hr")
+domain <- paste0("&domain=EUR-", c("11", "11i", "22", "44", "44i"),
+collapse = "")
+to_get <- c("domain", "experiment", "ensemble", "rcm_name", "driving_model", "time_frequency", "variable")
+user_creds <- NULL
+source(file = "creds.R")
+url <- paste0(node, "search?type=Dataset&facets=*",
+switch(EXPR = is.null(x = project) + 1,
+paste0("&project=", project),
+NULL),
+switch(EXPR = is.null(x = variable) + 1,
+paste0("&variable=", variable),
+NULL),
+switch(EXPR = is.null(x = domain) + 1,
+domain,
+NULL),
+switch(EXPR = is.null(x = time_frequency) + 1,
+paste0("&time_frequency=", time_frequency),
+NULL),
+"&limit=0&format=application%2Fsolr%2Bjson")
+json_fetch <- fromJSON(txt = curl(url = url[1]),
+flatten = TRUE)
+fct <- json_fetch[["facet_counts"]][["facet_fields"]]
+fct <- fct[names(x = fct) %in% to_get]
+fct_sub <- lapply(
+X = fct,
+FUN = function(x) {
+if (length(x = x) == 0) {
+out <- NULL
+} else {
+out <- matrix(data = unlist(x = x,
+recursive = TRUE),
+ncol = 2,
+byrow = TRUE)
+out <- as.data.table(x = out)
+names(x = out) <- c("id", "number")
+}
+return(out)
+}
+)
+meta <- rbindlist(l = fct_sub,
+idcol = "variable")
+meta
