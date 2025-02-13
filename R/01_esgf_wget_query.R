@@ -26,8 +26,8 @@ dl_attempt <- 10
 node <- "https://esgf-data.dkrz.de/esg-search/"
 # node <- "https://esgf-node.llnl.gov/esg-search/"
 
-project <- c("CORDEX")#, "CMIP5", "CMIP6")
-variable <- c("pr", "tas")
+project <- c("CORDEX", "CMIP5", "CMIP6")
+variable <- c("pr", "prc", "prsn", "tas", "precipitation", "precipitation_flux")
 time_frequency <- c("1hr")
 domain <- paste0("&domain=EUR-", c("11", "11i", "22", "44", "44i"),
                  collapse = "")
@@ -42,16 +42,19 @@ source(file = "creds.R")
 
 url <- paste0(node, "search?type=Dataset&facets=*",
               switch(EXPR = is.null(x = project) + 1,
-                     paste0("&project=", project),
+                     paste0("&project=", project,
+                            collapse = ""),
                      NULL),
               switch(EXPR = is.null(x = variable) + 1,
-                     paste0("&variable=", variable),
+                     paste0("&variable=", variable,
+                            collapse = ""),
                      NULL),
               switch(EXPR = is.null(x = domain) + 1,
                      domain,
                      NULL),
               switch(EXPR = is.null(x = time_frequency) + 1,
-                     paste0("&time_frequency=", time_frequency),
+                     paste0("&time_frequency=", time_frequency,
+                            collapse = ""),
                      NULL),
               "&limit=0&format=application%2Fsolr%2Bjson")
 
@@ -129,7 +132,8 @@ wget_fls <- list.files(path = "./data/",
                        full.names = TRUE)
 
 wget_fls
-wget_all <- unlist(x = read.table(file = wget_fls[3]))
+wget_all <- unlist(x = read.table(file = wget_fls[grep(pattern = Sys.Date(),
+                                                       x = wget_fls)]))
 
 wget_all_l <- split(x = wget_all,
                     f = ceiling(x = seq_along(along.with = wget_all) / 100))
